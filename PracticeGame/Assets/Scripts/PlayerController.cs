@@ -7,10 +7,10 @@ using UnityEngine.UI;
 public class PlayerController : MonoBehaviour
 {
    public float moveSpeed = 10f;
-   public float jump = 10;
-   public Text scoreText ;
+   public float jumpForce = 10f;
+   public Text scoreText;
        public int score = 0;
-public GameObject star;
+public GameObject starPrefab;
         private Rigidbody rb; // Start is called before the first frame update
    
     void Start()
@@ -18,9 +18,10 @@ public GameObject star;
      
        rb = GetComponent<Rigidbody>();
        scoreText = GameObject.FindWithTag("Score").GetComponent<Text>();
+            scoreText.text = "Score:" + score;
 
 
-InvokeRepeating("SpawnStar",2f,3f);
+               InvokeRepeating("SpawnStar",2f,3f);
     }
 
    // Update is called once per frame
@@ -29,37 +30,50 @@ InvokeRepeating("SpawnStar",2f,3f);
          float h =Input.GetAxis("Horizontal");
          if(Input.GetButtonUp("Jump"))
         {
-            rb.AddForce(Vector3.up*jumpForce,ForceMode.Impulse)
+            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
         }
+        if (transform.position.y < -10)
+{
+    CancelInvoke("SpawnStar");
+    SceneManager.LoadScene("SampleScene");
+}
     }
  
     void OnCollisionEnter(Collision other)
     {
-        if(other.gameObject.tag == "Star")
+        if(other.gameObject.CompareTag("Collectible"))
         {
             Destroy(other.gameObject);
             score+=100;
-            scoreText="Score:" + score;
-            if(score>=1000)
+            scoreText.text ="Score:" + score;
+            
+            if(score >= 1000)
             {
-                SceneManager.LoadScene("SampleScene")
-            }
+                CancelInvoke("SpawnStar");
 
+                SceneManager.LoadScene("SampleScene");
+            }
+        }
 
         }
-    }
+    
     void FixedUpdate()
     {
+             float h =Input.GetAxis("Horizontal");
+        Vector3 movement = new Vector3(h, 0, 0) * moveSpeed * Time.deltaTime;
 
-        Vector3 movement = movement*moveSpeed*Time.deltaTime;
 
-
-        rb.MovePosition = movement;
+        rb.MovePosition (rb.position + movement);
     }
     
 void SpawnStar()
-    {
-        Vector3 spawnPosition = transform.position *new Vector3 (Random.Range(-25,24),5,0);
-        instantiate(starPrefab,spawnPosition,Quaternion.identity);
-    }
+{
+    if (starPrefab == null) return;
+
+    float x = Random.Range(-10f, 10f);
+
+    Vector3 spawnPosition = new Vector3(transform.position.x + x, 5f, 0);
+
+    Instantiate(starPrefab, spawnPosition, Quaternion.identity);
+}
 }
